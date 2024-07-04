@@ -8,7 +8,7 @@ from typing import List
 import logging
 import mysql.connector
 import os
-
+from os import environ
 
 
 
@@ -62,9 +62,9 @@ def get_logger() -> logging.Logger:
 def get_db() -> mysql.connector.connection.MYSQLConnection:
     """ Connection to MySQL environment """
     db_connect = mysql.connector.connect(
-        user=os.getenv('PERSONAL_DATA_DB_USERNAME', 'root'),
-        password=os.getenv('PERSONAL_DATA_DB_PASSWORD', ''),
-        host=os.getenv('PERSONAL_DATA_DB_HOST', 'localhost'),
-        database=os.getenv('PERSONAL_DATA_DB_NAME')
+        user=environ('PERSONAL_DATA_DB_USERNAME', 'root'),
+        password=environ('PERSONAL_DATA_DB_PASSWORD', ''),
+        host=environ('PERSONAL_DATA_DB_HOST', 'localhost'),
+        database=environ('PERSONAL_DATA_DB_NAME')
     )
     return db_connect
