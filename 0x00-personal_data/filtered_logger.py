@@ -11,7 +11,6 @@ import os
 from os import environ
 
 
-
 class RedactingFormatter(logging.Formatter):
     """ Redacting Formatter class
     """
@@ -73,3 +72,24 @@ def get_db() -> mysql.connector.connection.MySQLConnection:
         database=db_name
     )
     return conn
+
+
+def main() -> None:
+    """Main function to retrieve and log filtered user data"""
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM users;")
+    for row in cursor:
+        filtered_data = filter_datum(
+            PII_FIELDS,
+            RedactingFormatter.REDACTION,
+            str(row),
+            RedactingFormatter.SEPARATOR)
+        logger = get_logger()
+        logger.info(filtered_data)
+    cursor.close()
+    db.close()
+
+
+if __name__ == "__main__":
+    main()
