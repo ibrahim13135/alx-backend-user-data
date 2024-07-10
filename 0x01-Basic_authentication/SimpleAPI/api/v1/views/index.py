@@ -3,6 +3,9 @@
 """
 from flask import jsonify, abort
 from api.v1.views import app_views
+from flask import Flask, jsonify, abort, request
+from api.v1.auth.auth import Auth
+auth = Auth()
 
 
 @app_views.route('/status', methods=['GET'], strict_slashes=False)
@@ -24,3 +27,17 @@ def stats() -> str:
     stats = {}
     stats['users'] = User.count()
     return jsonify(stats)
+
+
+@app_views.route('/unauthorized/', methods=['GET'], strict_slashes=False)
+def unauthorized() -> None:
+    """GET /api/v1/unauthorized
+    Return:
+      - Unauthorized error.
+    """
+    abort(401)
+
+
+@app_views.route('/forbidden', methods=['GET'], strict_slashes=False)
+def Forbidden() -> str:
+    abort(403)

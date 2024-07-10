@@ -4,6 +4,259 @@
 
 Authentication is a mechanism to verify the identity of a user or process. Basic Authentication involves sending a username and password with each request to a server. This guide covers how to implement Basic Authentication in Flask using the `Flask-HTTPAuth` extension.
 
+
+
+
+
+
+Sure! I'll explain each of these decorators and methods, along with examples and their outputs.
+
+### `@app.errorhandler`
+
+The `@app.errorhandler` decorator in Flask allows you to specify a custom error handler for a particular HTTP status code.
+
+#### Example
+
+Let's create custom error handlers for 401 (Unauthorized) and 403 (Forbidden) status codes.
+
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.errorhandler(401)
+def unauthorized(error):
+    return jsonify({"error": "Unauthorized"}), 401
+
+@app.errorhandler(403)
+def forbidden(error):
+    return jsonify({"error": "Forbidden"}), 403
+
+@app.route('/unauthorized')
+def trigger_unauthorized():
+    abort(401)
+
+@app.route('/forbidden')
+def trigger_forbidden():
+    abort(403)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/unauthorized`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/unauthorized
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+2. **Accessing `/forbidden`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/forbidden
+   ```
+
+   ```json
+   {
+     "error": "Forbidden"
+   }
+   ```
+
+   Status code: `403 Forbidden`
+
+### `@app.before_request`
+
+The `@app.before_request` decorator is used to register a function to run before each request. This is useful for tasks like checking authentication before handling a request.
+
+#### Example
+
+Let's use `@app.before_request` to require an authentication token for certain routes.
+
+```python
+from flask import Flask, jsonify, request, abort
+
+app = Flask(__name__)
+
+@app.before_request
+def require_auth():
+    if request.endpoint != 'public' and not request.headers.get("Authorization"):
+        abort(401)
+
+@app.route('/public')
+def public():
+    return jsonify({"message": "This is a public endpoint."})
+
+@app.route('/private')
+def private():
+    return jsonify({"message": "This is a private endpoint."})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/public`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/public
+   ```
+
+   ```json
+   {
+     "message": "This is a public endpoint."
+   }
+   ```
+
+2. **Accessing `/private` without Authorization header:**
+
+   ```sh
+   curl http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+3. **Accessing `/private` with Authorization header:**
+
+   ```sh
+   curl -H "Authorization: Bearer token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "message": "This is a private endpoint."
+   }
+   ```
+
+### `require_auth`, `authorization_header`, and `current_user`
+
+These methods are often used in the context of custom authentication implementations.
+
+#### `require_auth`
+
+This function checks whether a request requires authentication based on the requested endpoint.
+
+#### `authorization_header`
+
+This function retrieves the `Authorization` header from the request, typically to extract a token.
+
+#### `current_user`
+
+This function extracts and returns the current authenticated user based on the token provided.
+
+#### Example
+
+Let's implement these methods and integrate them with `@app.before_request`.
+
+```python
+from flask import Flask, jsonify, request, abort
+
+app = Flask(__name__)
+
+def require_auth():
+    if request.endpoint != 'public' and not authorization_header():
+        abort(401)
+
+def authorization_header():
+    return request.headers.get("Authorization")
+
+def current_user():
+    token = authorization_header()
+    # Dummy implementation: In reality, you would decode the token and verify the user
+    if token == "Bearer valid_token":
+        return {"username": "valid_user"}
+    return None
+
+@app.before_request
+def before_request():
+    require_auth()
+
+@app.route('/public')
+def public():
+    return jsonify({"message": "This is a public endpoint."})
+
+@app.route('/private')
+def private():
+    user = current_user()
+    if not user:
+        abort(403)
+    return jsonify({"message": f"Hello, {user['username']}!"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/public`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/public
+   ```
+
+   ```json
+   {
+     "message": "This is a public endpoint."
+   }
+   ```
+
+2. **Accessing `/private` without Authorization header:**
+
+   ```sh
+   curl http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+3. **Accessing `/private` with invalid token:**
+
+   ```sh
+   curl -H "Authorization: Bearer invalid_token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Forbidden"
+   }
+   ```
+
+   Status code: `403 Forbidden`
+
+4. **Accessing `/private` with valid token:**
+
+   ```sh
+   curl -H "Authorization: Bearer valid_token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "message": "Hello, valid_user!"
+   }
+   ```
+
+These examples demonstrate how to use `@app.errorhandler` for custom error handling and how to implement authentication checks using `@app.before_request` along with helper functions like `require_auth`, `authorization_header`, and `current_user`.
 ### Basic Authentication Example
 
 Here's a step-by-step example of implementing Basic Authentication in Flask:
@@ -566,3 +819,256 @@ if __name__ == '__main__':
 ### Conclusion
 
 By following these examples, you can implement Basic, Digest, and Token authentication in your Flask applications using `Flask-HTTPAuth`. This provides a foundational understanding of authentication mechanisms and their implementation in Flask.
+
+
+
+
+
+
+
+### `@app.errorhandler`
+
+The `@app.errorhandler` decorator in Flask allows you to specify a custom error handler for a particular HTTP status code.
+
+#### Example
+
+Let's create custom error handlers for 401 (Unauthorized) and 403 (Forbidden) status codes.
+
+```python
+from flask import Flask, jsonify
+
+app = Flask(__name__)
+
+@app.errorhandler(401)
+def unauthorized(error):
+    return jsonify({"error": "Unauthorized"}), 401
+
+@app.errorhandler(403)
+def forbidden(error):
+    return jsonify({"error": "Forbidden"}), 403
+
+@app.route('/unauthorized')
+def trigger_unauthorized():
+    abort(401)
+
+@app.route('/forbidden')
+def trigger_forbidden():
+    abort(403)
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/unauthorized`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/unauthorized
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+2. **Accessing `/forbidden`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/forbidden
+   ```
+
+   ```json
+   {
+     "error": "Forbidden"
+   }
+   ```
+
+   Status code: `403 Forbidden`
+
+### `@app.before_request`
+
+The `@app.before_request` decorator is used to register a function to run before each request. This is useful for tasks like checking authentication before handling a request.
+
+#### Example
+
+Let's use `@app.before_request` to require an authentication token for certain routes.
+
+```python
+from flask import Flask, jsonify, request, abort
+
+app = Flask(__name__)
+
+@app.before_request
+def require_auth():
+    if request.endpoint != 'public' and not request.headers.get("Authorization"):
+        abort(401)
+
+@app.route('/public')
+def public():
+    return jsonify({"message": "This is a public endpoint."})
+
+@app.route('/private')
+def private():
+    return jsonify({"message": "This is a private endpoint."})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/public`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/public
+   ```
+
+   ```json
+   {
+     "message": "This is a public endpoint."
+   }
+   ```
+
+2. **Accessing `/private` without Authorization header:**
+
+   ```sh
+   curl http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+3. **Accessing `/private` with Authorization header:**
+
+   ```sh
+   curl -H "Authorization: Bearer token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "message": "This is a private endpoint."
+   }
+   ```
+
+### `require_auth`, `authorization_header`, and `current_user`
+
+These methods are often used in the context of custom authentication implementations.
+
+#### `require_auth`
+
+This function checks whether a request requires authentication based on the requested endpoint.
+
+#### `authorization_header`
+
+This function retrieves the `Authorization` header from the request, typically to extract a token.
+
+#### `current_user`
+
+This function extracts and returns the current authenticated user based on the token provided.
+
+#### Example
+
+Let's implement these methods and integrate them with `@app.before_request`.
+
+```python
+from flask import Flask, jsonify, request, abort
+
+app = Flask(__name__)
+
+def require_auth():
+    if request.endpoint != 'public' and not authorization_header():
+        abort(401)
+
+def authorization_header():
+    return request.headers.get("Authorization")
+
+def current_user():
+    token = authorization_header()
+    # Dummy implementation: In reality, you would decode the token and verify the user
+    if token == "Bearer valid_token":
+        return {"username": "valid_user"}
+    return None
+
+@app.before_request
+def before_request():
+    require_auth()
+
+@app.route('/public')
+def public():
+    return jsonify({"message": "This is a public endpoint."})
+
+@app.route('/private')
+def private():
+    user = current_user()
+    if not user:
+        abort(403)
+    return jsonify({"message": f"Hello, {user['username']}!"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+```
+
+#### Output
+
+1. **Accessing `/public`:**
+
+   ```sh
+   curl http://127.0.0.1:5000/public
+   ```
+
+   ```json
+   {
+     "message": "This is a public endpoint."
+   }
+   ```
+
+2. **Accessing `/private` without Authorization header:**
+
+   ```sh
+   curl http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Unauthorized"
+   }
+   ```
+
+   Status code: `401 Unauthorized`
+
+3. **Accessing `/private` with invalid token:**
+
+   ```sh
+   curl -H "Authorization: Bearer invalid_token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "error": "Forbidden"
+   }
+   ```
+
+   Status code: `403 Forbidden`
+
+4. **Accessing `/private` with valid token:**
+
+   ```sh
+   curl -H "Authorization: Bearer valid_token" http://127.0.0.1:5000/private
+   ```
+
+   ```json
+   {
+     "message": "Hello, valid_user!"
+   }
+   ```
+
+These examples demonstrate how to use `@app.errorhandler` for custom error handling and how to implement authentication checks using `@app.before_request` along with helper functions like `require_auth`, `authorization_header`, and `current_user`.
