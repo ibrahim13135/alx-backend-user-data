@@ -44,6 +44,13 @@ def noacess(error) -> Tuple[Any, int]:
     return jsonify({"error": "Forbidden"}), 403
 
 
+
+# Update @app.before_request in api/v1/app.py:
+# Assign the result of auth.current_user(request) to request.current_user
+
+
+
+
 @app.before_request
 def before_request():
     """
@@ -60,7 +67,8 @@ def before_request():
         if auth.require_auth(request.path, excluded):
             if auth.authorization_header(request) is None:
                 abort(401, description="Unauthorized")
-            if auth.current_user(request) is None:
+            request.current_user = auth.current_user(request)
+            if request.current_user is None:
                 abort(403, description="Forbidden")
 
 
