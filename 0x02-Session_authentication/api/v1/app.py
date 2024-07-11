@@ -44,11 +44,8 @@ def noacess(error) -> Tuple[Any, int]:
     return jsonify({"error": "Forbidden"}), 403
 
 
-
 # Update @app.before_request in api/v1/app.py:
 # Assign the result of auth.current_user(request) to request.current_user
-
-
 
 
 @app.before_request
