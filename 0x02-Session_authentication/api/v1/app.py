@@ -1,79 +1,81 @@
 #!/usr/bin/env python3
 """
-task 1: Error handler: Unauthorized
+Route module for the API
 """
 from os import getenv
 from api.v1.views import app_views
-from typing import Tuple, Any
-from flask_cors import (CORS, cross_origin)
+from api.v1.auth.auth import Auth
+from api.v1.auth.session_auth import SessionAuth
+from api.v1.auth.basic_auth import BasicAuth
 from flask import Flask, jsonify, abort, request
-import os
+from flask_cors import (CORS, cross_origin)
+# import os
+
 
 app = Flask(__name__)
 app.register_blueprint(app_views)
 CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 auth = None
-AUTH_TYPE = os.getenv("AUTH_TYPE")
-if AUTH_TYPE == "auth":
-    from api.v1.auth.auth import Auth
 
+if getenv("AUTH_TYPE") == "auth":
     auth = Auth()
-elif AUTH_TYPE == "basic_auth":
-    from api.v1.auth.basic_auth import BasicAuth
-
+elif getenv("AUTH_TYPE") == "basic_auth":
     auth = BasicAuth()
-
-elif AUTH_TYPE == "session_auth":
-    from api.v1.auth.session_auth import SessionAuth
+elif getenv("AUTH_TYPE") == "session_auth":
     auth = SessionAuth()
+elif getenv('AUTH_TYPE') == 'session_exp_auth':
+    from api.v1.auth.session_exp_auth import SessionExpAuth
+    auth = SessionExpAuth()
+elif getenv('AUTH_TYPE') == 'session_db_auth':
+    from api.v1.auth.session_db_auth import SessionDBAuth
+    auth = SessionDBAuth()
+
+
+@app.errorhandler(404)
+def not_found(error) -> str:
+    """ Not found handler
+    """
+    return jsonify({"error": "Not found"}), 404
 
 
 @app.errorhandler(401)
-def not_found(error) -> str:
-    """ handler not found
+def unauthorized(error) -> str:
+    """
+    Unauthorized handler
     """
     return jsonify({"error": "Unauthorized"}), 401
 
 
 @app.errorhandler(403)
-def noacess(error) -> Tuple[Any, int]:
+def forbidden(error) -> str:
     """
-        Your access is not authorized
-    Args:
-        error: Error code
-
-    Returns:
-      A string for the error
+    Forbidden handler.
     """
     return jsonify({"error": "Forbidden"}), 403
 
 
-# Update @app.before_request in api/v1/app.py:
-# Assign the result of auth.current_user(request) to request.current_user
-
-
 @app.before_request
-def before_request():
+def before_request() -> None:
+    """ Filter for request
     """
-    Each request is handled with its proper route
-    """
-    if auth is None:
-        pass
-    else:
-        excluded = [
-            '/api/v1/status/',
-            '/api/v1/unauthorized/',
-            '/api/v1/forbidden/'
-        ]
-        if auth.require_auth(request.path, excluded):
-            if auth.authorization_header(request) is None:
-                abort(401, description="Unauthorized")
+    request_path_list = [
+        '/api/v1/status/',
+        '/api/v1/unauthorized/',
+        '/api/v1/forbidden/',
+        '/api/v1/auth_session/login/']
+    if auth:
+        if auth.require_auth(request.path, request_path_list):
+            if auth.authorization_header(
+                    request) is None and auth.session_cookie(request) is None:
+                abort(401)
             request.current_user = auth.current_user(request)
+            if auth.current_user(request) is None:
+                abort(403)
             if request.current_user is None:
-                abort(403, description="Forbidden")
+                abort(403)
 
 
 if __name__ == "__main__":
     host = getenv("API_HOST", "0.0.0.0")
     port = getenv("API_PORT", "5000")
-    app.run(host=host, port=port, debug=True)
+    app.run(host=host, port=port)
