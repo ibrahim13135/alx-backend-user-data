@@ -12,6 +12,7 @@ import fnmatch
 class Auth():
     """ Auth class for managing API authentication
     """
+
     def __init__(self) -> None:
         """ Initialize the Auth class
         """
