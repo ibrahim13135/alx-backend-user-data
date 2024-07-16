@@ -9,6 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from user import Base, User
 from typing import Dict
 
+
 class DB:
     """DB class
     """
@@ -30,11 +31,6 @@ class DB:
             self.__session = DBSession()
         return self.__session
 
-
-# two required string arguments: email and hashed_password,
-#  and returns a User object.
-# the method should save the user to the database.
-# No validations are required at this stage.
 
 
     def add_user(self, email: str, hashed_password: str) -> User:
