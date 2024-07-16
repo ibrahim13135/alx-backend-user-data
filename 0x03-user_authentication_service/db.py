@@ -34,24 +34,19 @@ class DB:
             self.__session = DBSession()
         return self.__session
 
-    def add_user(self, email: str, hashed_password: str) -> User:
-        """Add a user to the database
+    def find_user_by(self, **kwargs) -> User:
+        """Find a user by arbitrary keyword arguments
 
         Args:
-            email (str): The user's email
-            hashed_password (str): The user's hashed password
+            **kwargs: Arbitrary keyword arguments to filter the users
 
         Returns:
-            User: The created user
+            User: The first user found
+
+        Raises:
+            NoResultFound: If no user is found
+            InvalidRequestError: If invalid query arguments are passed
         """
-        user = User(email=email, hashed_password=hashed_password)
-        self._session.add(user)
-        self._session.commit()
-        return user
-
-
-    def find_user_by(self, **kwargs) -> User:
-
         try:
             user = self._session.query(User).filter_by(**kwargs).first()
             if user is None:
