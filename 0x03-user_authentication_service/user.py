@@ -16,7 +16,7 @@ Base = declarative_base()
 class User(Base):
     """
     SQLAlchemy model for the users table.
-    """    
+    """
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
     email = Column(String(250), nullable=False)
