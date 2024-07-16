@@ -2,7 +2,7 @@
 """
 DB module
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, tuple_
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
@@ -35,22 +35,24 @@ class DB:
         return self.__session
 
     def find_user_by(self, **kwargs) -> User:
-        """Find a user by arbitrary keyword arguments
-
-        Args:
-            **kwargs: Arbitrary keyword arguments to filter the users
-
-        Returns:
-            User: The first user found
-
-        Raises:
-            NoResultFound: If no user is found
-            InvalidRequestError: If invalid query arguments are passed
+        """ Find user by a given attribute
+            Args:
+                - Dictionary of attributes to use as search
+                  parameters
+            Return:
+                - User object
         """
-        try:
-            user = self.session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound
-            return user
-        except AttributeError:
-            raise InvalidRequestError
+
+        attrs, vals = [], []
+        for attr, val in kwargs.items():
+            if not hasattr(User, attr):
+                raise InvalidRequestError()
+            attrs.append(getattr(User, attr))
+            vals.append(val)
+
+        session = self._session
+        query = session.query(User)
+        user = query.filter(tuple_(*attrs).in_([tuple(vals)])).first()
+        if not user:
+            raise NoResultFound()
+        return user
