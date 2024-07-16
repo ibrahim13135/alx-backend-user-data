@@ -7,7 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from user import Base, User
-
+from typing import Dict
 
 class DB:
     """DB class
@@ -47,7 +47,12 @@ class DB:
         Returns:
             User: The created user object.
         """
-        user = User(email=email, hashed_password=hashed_password)
-        self._session.add(user)
-        self._session.commit()
-        return user
+        new_user = User(email=email, hashed_password=hashed_password)
+        try:
+            self._session.add(new_user)
+            self._session.commit()
+        except Exception as e:
+            print(f"Error adding user to database: {e}")
+            self._session.rollback()
+            raise
+        return new_user
