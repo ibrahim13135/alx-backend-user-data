@@ -2,6 +2,9 @@
 """
 DB module
 """
+from typing import Dict
+
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -34,23 +37,22 @@ class DB:
             self.__session = DBSession()
         return self.__session
 
-    def find_user_by(self, **kwargs) -> User:
-        """Find a user by arbitrary keyword arguments
-
-        Args:
-            **kwargs: Arbitrary keyword arguments to filter the users
-
-        Returns:
-            User: The first user found
+    def find_user_by(self, **kwargs: Dict[str, str]) -> User:
+        """Find a user by specified attributes.
 
         Raises:
-            NoResultFound: If no user is found
-            InvalidRequestError: If invalid query arguments are passed
+            error: NoResultFound: When no results are found.
+            error: InvalidRequestError: When invalid query arguments are passed
+
+        Returns:
+            User: First row found in the `users` table.
         """
+        session = self._session
         try:
-            user = self._session.query(User).filter_by(**kwargs).first()
-            if user is None:
-                raise NoResultFound
-            return user
-        except AttributeError:
-            raise InvalidRequestError
+            user = session.query(User).filter_by(**kwargs).one()
+        except NoResultFound:
+            raise NoResultFound()
+        except InvalidRequestError:
+            raise InvalidRequestError()
+        # print("Type of user: {}".format(type(user)))
+        return user
