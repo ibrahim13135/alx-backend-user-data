@@ -2,12 +2,12 @@
 """
 DB module
 """
-
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.session import Session
+
 from user import Base, User
-from typing import Dict
 
 
 class DB:
@@ -31,25 +31,17 @@ class DB:
             self.__session = DBSession()
         return self.__session
 
-
-
     def add_user(self, email: str, hashed_password: str) -> User:
-        """Adds a new user to the db with the given email and hashed password.
+        """Add a user to the database
 
         Args:
-            email (str): The email address of the new user.
-            hashed_password (str): The hashed password of the new user.
+            email (str): The user's email
+            hashed_password (str): The user's hashed password
 
         Returns:
-            User: A User object representing the new user.
+            User: The created user
         """
-        # Create new user
-        new_user = User(email=email, hashed_password=hashed_password)
-        try:
-            self._session.add(new_user)
-            self._session.commit()
-        except Exception as e:
-            print(f"Error adding user to database: {e}")
-            self._session.rollback()
-            raise
-        return new_user
+        user = User(email=email, hashed_password=hashed_password)
+        self._session.add(user)
+        self._session.commit()
+        return user
